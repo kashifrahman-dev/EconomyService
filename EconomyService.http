@@ -1,0 +1,6 @@
+@EconomyService_HostAddress = http://localhost:5272
+
+GET {{EconomyService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

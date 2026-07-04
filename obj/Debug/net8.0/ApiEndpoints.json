@@ -1,0 +1,23 @@
+[
+  {
+    "ContainingType": "EconomyService.Controllers.WalletController",
+    "Method": "Credit",
+    "RelativePath": "v1/wallets/{playerId}/credit",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "playerId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "EconomyService.DTOs.CreditRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  }
+]
