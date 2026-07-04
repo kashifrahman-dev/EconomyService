@@ -1,6 +1,43 @@
 [
   {
     "ContainingType": "EconomyService.Controllers.WalletController",
+    "Method": "GetWallet",
+    "RelativePath": "v1/wallets/{playerId}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "playerId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EconomyService.Controllers.WalletController",
+    "Method": "ClaimReward",
+    "RelativePath": "v1/wallets/{playerId}/claim-reward",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "playerId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "EconomyService.DTOs.ClaimRewardRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EconomyService.Controllers.WalletController",
     "Method": "Credit",
     "RelativePath": "v1/wallets/{playerId}/credit",
     "HttpMethod": "POST",
@@ -15,6 +52,43 @@
       {
         "Name": "request",
         "Type": "EconomyService.DTOs.CreditRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EconomyService.Controllers.WalletController",
+    "Method": "Purchase",
+    "RelativePath": "v1/wallets/{playerId}/purchase",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "playerId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "request",
+        "Type": "EconomyService.DTOs.PurchaseRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "EconomyService.Controllers.WalletController",
+    "Method": "GetTransactions",
+    "RelativePath": "v1/wallets/{playerId}/transactions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "playerId",
+        "Type": "System.String",
         "IsRequired": true
       }
     ],

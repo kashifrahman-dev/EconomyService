@@ -104,7 +104,6 @@ D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\stati
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\staticwebassets.build.json.cache
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\staticwebassets.development.json
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\staticwebassets.build.endpoints.json
-D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\EconomyS.7C1C58A8.Up2Date
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\EconomyService.dll
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\refint\EconomyService.dll
