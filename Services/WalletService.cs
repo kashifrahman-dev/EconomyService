@@ -27,9 +27,24 @@ namespace EconomyService.Services
             throw new NotImplementedException();
         }
 
-        public Task<ApiResponse<WalletDto>> GetWalletAsync(string playerId)
+        public async Task<ApiResponse<WalletDto>> GetWalletAsync(string playerId)
         {
-            throw new NotImplementedException();
+            var wallet = await _context.Wallets.FindAsync(playerId);
+
+            if (wallet == null)
+            {
+                return ApiResponse<WalletDto>.Fail("Wallet not found.");
+            }
+
+            var walletDto = new WalletDto
+            {
+                PlayerId = wallet.PlayerId,
+                Balance = wallet.Balance,
+                Inventory = wallet.Inventory,
+                ClaimedRewards = wallet.ClaimedRewards
+            };
+
+            return ApiResponse<WalletDto>.Ok(walletDto, "Wallet fetched successfully.");
         }
 
         public Task<ApiResponse<WalletDto>> PurchaseAsync(string playerId, PurchaseRequest request)
