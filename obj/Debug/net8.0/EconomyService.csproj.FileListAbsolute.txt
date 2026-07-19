@@ -110,3 +110,15 @@ D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\refin
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\EconomyService.pdb
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\EconomyService.genruntimeconfig.cache
 D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\ref\EconomyService.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\EconomyService.sourcelink.json
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.Bcl.Cryptography.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\System.Formats.Asn1.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
+D:\EmployeeManagementSystem\EconomyService\EconomyService\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
