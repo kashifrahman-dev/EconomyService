@@ -23,8 +23,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
-    <Folder Include="Interfaces\" />
     <Folder Include="Configurations\" />
     <Folder Include="Middlewares\" />
     <Folder Include="Repositories\" />
