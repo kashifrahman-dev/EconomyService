@@ -5,7 +5,6 @@ using EconomyService.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace EconomyService.Controllers
 {
@@ -16,31 +15,48 @@ namespace EconomyService.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
-        public WalletController(ApplicationDbContext context, ICurrentUserService currentUserService)
+
+        public WalletController(
+            ApplicationDbContext context,
+            ICurrentUserService currentUserService)
         {
             _context = context;
             _currentUserService = currentUserService;
         }
-        private string? GetCurrentUserEmail()
-        {
-            return User.FindFirst(ClaimTypes.Email)?.Value;
-        }
 
-        private async Task<User?> GetCurrentUserAsync()
-        {
-            var email = GetCurrentUserEmail();
+        // ============================================================
+        // CREDIT WALLET
+        // ============================================================
 
-            if (string.IsNullOrWhiteSpace(email))
+        [HttpPost("{playerId}/credit")]
+        public async Task<IActionResult> Credit(
+            string playerId,
+            [FromBody] CreditRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(playerId))
             {
-                return null;
+                return BadRequest(new
+                {
+                    message = "PlayerId is required."
+                });
             }
 
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.Email == email);
-        }
-        [HttpPost("{playerId}/credit")]
-        public async Task<IActionResult> Credit(string playerId, CreditRequest request)
-        {
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Request body is required."
+                });
+            }
+
+            if (request.Amount <= 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Credit amount must be greater than zero."
+                });
+            }
+
             var currentUser = await _currentUserService.GetCurrentUserAsync();
 
             if (currentUser == null)
@@ -51,31 +67,41 @@ namespace EconomyService.Controllers
                 });
             }
 
+            // Find wallet belonging to the authenticated user.
             var wallet = await _context.Wallets
-    .FirstOrDefaultAsync(w => w.UserId == currentUser.Id);
+                .FirstOrDefaultAsync(w => w.UserId == currentUser.Id);
 
+            // Create wallet if user does not have one.
             if (wallet == null)
             {
                 wallet = new Wallet
                 {
-                    PlayerId = Guid.NewGuid().ToString(),
+                    PlayerId = playerId,
                     UserId = currentUser.Id,
-                    Balance = 0
+                    Balance = 0,
+                    Inventory = new List<string>(),
+                    ClaimedRewards = new List<string>()
                 };
 
                 _context.Wallets.Add(wallet);
             }
 
             wallet.Balance += request.Amount;
-            _context.Transactions.Add(new Transaction
+
+            var transaction = new Transaction
             {
                 PlayerId = wallet.PlayerId,
                 Type = "Credit",
                 Amount = request.Amount,
-                Description = request.Reason
-            });
+                Description = string.IsNullOrWhiteSpace(request.Reason)
+                    ? "Wallet credited"
+                    : request.Reason
+            };
+
+            _context.Transactions.Add(transaction);
 
             await _context.SaveChangesAsync();
+
             var walletDto = new WalletDto
             {
                 PlayerId = wallet.PlayerId,
@@ -84,11 +110,17 @@ namespace EconomyService.Controllers
                 ClaimedRewards = wallet.ClaimedRewards
             };
 
-            return Ok(ApiResponse<WalletDto>.Ok(
-                 walletDto,
-                 "Currency credited successfully."
-            ));
+            return Ok(
+                ApiResponse<WalletDto>.Ok(
+                    walletDto,
+                    "Currency credited successfully."
+                )
+            );
         }
+
+        // ============================================================
+        // GET WALLET
+        // ============================================================
 
         [HttpGet("{playerId}")]
         public async Task<IActionResult> GetWallet(string playerId)
@@ -103,17 +135,10 @@ namespace EconomyService.Controllers
                 });
             }
 
-            var email = GetCurrentUserEmail();
-
-            if (string.IsNullOrEmpty(email))
-            {
-                return Unauthorized(new
-                {
-                    message = "User not authenticated."
-                });
-            }
             var wallet = await _context.Wallets
-                .FirstOrDefaultAsync(w => w.UserId == currentUser.Id);
+                .FirstOrDefaultAsync(w =>
+                    w.PlayerId == playerId &&
+                    w.UserId == currentUser.Id);
 
             if (wallet == null)
             {
@@ -123,19 +148,77 @@ namespace EconomyService.Controllers
                 });
             }
 
-            return Ok(new
+            var walletDto = new WalletDto
             {
-                playerId = wallet.PlayerId,
-                balance = wallet.Balance,
-                inventory = wallet.Inventory,
-                claimedRewards = wallet.ClaimedRewards
-            });
+                PlayerId = wallet.PlayerId,
+                Balance = wallet.Balance,
+                Inventory = wallet.Inventory,
+                ClaimedRewards = wallet.ClaimedRewards
+            };
+
+            return Ok(ApiResponse<WalletDto>.Ok(
+                walletDto,
+                "Wallet fetched successfully."
+            ));
         }
 
+        // ============================================================
+        // PURCHASE
+        // ============================================================
+
         [HttpPost("{playerId}/purchase")]
-        public async Task<IActionResult> Purchase(string playerId, PurchaseRequest request)
+        public async Task<IActionResult> Purchase(
+            string playerId,
+            [FromBody] PurchaseRequest request)
         {
-            var wallet = await _context.Wallets.FindAsync(playerId);
+            if (string.IsNullOrWhiteSpace(playerId))
+            {
+                return BadRequest(new
+                {
+                    message = "PlayerId is required."
+                });
+            }
+
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Request body is required."
+                });
+            }
+
+            if (request.Cost <= 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Purchase cost must be greater than zero."
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.ItemName))
+            {
+                return BadRequest(new
+                {
+                    message = "Item name is required."
+                });
+            }
+
+            var currentUser = await _currentUserService.GetCurrentUserAsync();
+
+            if (currentUser == null)
+            {
+                return Unauthorized(new
+                {
+                    message = "User not found."
+                });
+            }
+
+            // IMPORTANT:
+            // Wallet must belong to the currently authenticated user.
+            var wallet = await _context.Wallets
+                .FirstOrDefaultAsync(w =>
+                    w.UserId == currentUser.Id &&
+                    w.PlayerId == playerId);
 
             if (wallet == null)
             {
@@ -154,31 +237,89 @@ namespace EconomyService.Controllers
             }
 
             wallet.Balance -= request.Cost;
-            wallet.Inventory.Add(request.ItemName);
-            _context.Transactions.Add(new Transaction
+
+            // Create a new list so EF detects the property change
+            // even when a value converter is being used.
+            wallet.Inventory = wallet.Inventory
+                .Append(request.ItemName.Trim())
+                .ToList();
+
+            var transaction = new Transaction
             {
                 PlayerId = wallet.PlayerId,
                 Type = "Purchase",
                 Amount = -request.Cost,
-                Description = $"Purchased {request.ItemName}"
-            });
-            // wallet.Inventory = request.ItemName;
+                Description = $"Purchased {request.ItemName.Trim()}"
+            };
+
+            _context.Transactions.Add(transaction);
 
             await _context.SaveChangesAsync();
 
-            return Ok(new
+            var walletDto = new WalletDto
             {
-                playerId = wallet.PlayerId,
-                balance = wallet.Balance,
-                inventory = wallet.Inventory,
-                message = "Purchase successful."
-            });
+                PlayerId = wallet.PlayerId,
+                Balance = wallet.Balance,
+                Inventory = wallet.Inventory,
+                ClaimedRewards = wallet.ClaimedRewards
+            };
+
+            return Ok(
+                ApiResponse<WalletDto>.Ok(
+                    walletDto,
+                    "Purchase successful."
+                )
+            );
         }
 
+        // ============================================================
+        // CLAIM REWARD
+        // ============================================================
+
         [HttpPost("{playerId}/claim-reward")]
-        public async Task<IActionResult> ClaimReward(string playerId, ClaimRewardRequest request)
+        public async Task<IActionResult> ClaimReward(
+            string playerId,
+            [FromBody] ClaimRewardRequest request)
         {
-            var wallet = await _context.Wallets.FindAsync(playerId);
+            if (string.IsNullOrWhiteSpace(playerId))
+            {
+                return BadRequest(new
+                {
+                    message = "PlayerId is required."
+                });
+            }
+
+            if (request == null)
+            {
+                return BadRequest(new
+                {
+                    message = "Request body is required."
+                });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.RewardId))
+            {
+                return BadRequest(new
+                {
+                    message = "RewardId is required."
+                });
+            }
+
+            var currentUser = await _currentUserService.GetCurrentUserAsync();
+
+            if (currentUser == null)
+            {
+                return Unauthorized(new
+                {
+                    message = "User not found."
+                });
+            }
+
+            // Only the authenticated user's wallet can be modified.
+            var wallet = await _context.Wallets
+                .FirstOrDefaultAsync(w =>
+                    w.UserId == currentUser.Id &&
+                    w.PlayerId == playerId);
 
             if (wallet == null)
             {
@@ -188,7 +329,9 @@ namespace EconomyService.Controllers
                 });
             }
 
-            if (wallet.ClaimedRewards.Contains(request.RewardId))
+            var rewardId = request.RewardId.Trim();
+
+            if (wallet.ClaimedRewards.Contains(rewardId))
             {
                 return BadRequest(new
                 {
@@ -196,30 +339,82 @@ namespace EconomyService.Controllers
                 });
             }
 
-            wallet.ClaimedRewards.Add(request.RewardId);
-            _context.Transactions.Add(new Transaction
+            // Create a new list so EF detects the modification.
+            wallet.ClaimedRewards = wallet.ClaimedRewards
+                .Append(rewardId)
+                .ToList();
+
+            var transaction = new Transaction
             {
                 PlayerId = wallet.PlayerId,
                 Type = "Reward",
                 Amount = 0,
-                Description = $"Claimed reward: {request.RewardId}"
-            });
+                Description = $"Claimed reward: {rewardId}"
+            };
+
+            _context.Transactions.Add(transaction);
 
             await _context.SaveChangesAsync();
 
-            return Ok(new
+            var walletDto = new WalletDto
             {
-                playerId = wallet.PlayerId,
-                claimedRewards = wallet.ClaimedRewards,
-                message = "Reward claimed successfully."
-            });
+                PlayerId = wallet.PlayerId,
+                Balance = wallet.Balance,
+                Inventory = wallet.Inventory,
+                ClaimedRewards = wallet.ClaimedRewards
+            };
+
+            return Ok(
+                ApiResponse<WalletDto>.Ok(
+                    walletDto,
+                    "Reward claimed successfully."
+                )
+            );
         }
+
+        // ============================================================
+        // GET TRANSACTIONS
+        // ============================================================
 
         [HttpGet("{playerId}/transactions")]
         public async Task<IActionResult> GetTransactions(string playerId)
         {
+            if (string.IsNullOrWhiteSpace(playerId))
+            {
+                return BadRequest(new
+                {
+                    message = "PlayerId is required."
+                });
+            }
+
+            var currentUser = await _currentUserService.GetCurrentUserAsync();
+
+            if (currentUser == null)
+            {
+                return Unauthorized(new
+                {
+                    message = "User not found."
+                });
+            }
+
+            // First verify that this wallet belongs to the current user.
+            var wallet = await _context.Wallets
+                .AsNoTracking()
+                .FirstOrDefaultAsync(w =>
+                    w.UserId == currentUser.Id &&
+                    w.PlayerId == playerId);
+
+            if (wallet == null)
+            {
+                return NotFound(new
+                {
+                    message = "Wallet not found."
+                });
+            }
+
             var transactions = await _context.Transactions
-                .Where(t => t.PlayerId == playerId)
+                .AsNoTracking()
+                .Where(t => t.PlayerId == wallet.PlayerId)
                 .OrderByDescending(t => t.CreatedAt)
                 .Select(t => new TransactionDto
                 {
@@ -230,9 +425,12 @@ namespace EconomyService.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(ApiResponse<List<TransactionDto>>.Ok(
-                transactions,
-                "Transactions fetched successfully."));
+            return Ok(
+                ApiResponse<List<TransactionDto>>.Ok(
+                    transactions,
+                    "Transactions fetched successfully."
+                )
+            );
         }
     }
 }
