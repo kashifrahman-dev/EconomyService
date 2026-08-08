@@ -1,32 +1,65 @@
 ﻿using EconomyService.Data;
 using EconomyService.DTOs;
+using EconomyService.Interfaces;
 using EconomyService.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace EconomyService.Controllers
 {
     [ApiController]
     [Route("v1/wallets")]
+    [Authorize]
     public class WalletController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public WalletController(ApplicationDbContext context)
+        private readonly ICurrentUserService _currentUserService;
+        public WalletController(ApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
+        }
+        private string? GetCurrentUserEmail()
+        {
+            return User.FindFirst(ClaimTypes.Email)?.Value;
         }
 
+        private async Task<User?> GetCurrentUserAsync()
+        {
+            var email = GetCurrentUserEmail();
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return null;
+            }
+
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
         [HttpPost("{playerId}/credit")]
         public async Task<IActionResult> Credit(string playerId, CreditRequest request)
         {
-            var wallet = await _context.Wallets.FindAsync(playerId);
+            var currentUser = await _currentUserService.GetCurrentUserAsync();
+
+            if (currentUser == null)
+            {
+                return Unauthorized(new
+                {
+                    message = "User not found."
+                });
+            }
+
+            var wallet = await _context.Wallets
+    .FirstOrDefaultAsync(w => w.UserId == currentUser.Id);
 
             if (wallet == null)
             {
                 wallet = new Wallet
                 {
-                    PlayerId = playerId,
+                    PlayerId = Guid.NewGuid().ToString(),
+                    UserId = currentUser.Id,
                     Balance = 0
                 };
 
@@ -60,7 +93,27 @@ namespace EconomyService.Controllers
         [HttpGet("{playerId}")]
         public async Task<IActionResult> GetWallet(string playerId)
         {
-            var wallet = await _context.Wallets.FindAsync(playerId);
+            var currentUser = await _currentUserService.GetCurrentUserAsync();
+
+            if (currentUser == null)
+            {
+                return Unauthorized(new
+                {
+                    message = "User not found."
+                });
+            }
+
+            var email = GetCurrentUserEmail();
+
+            if (string.IsNullOrEmpty(email))
+            {
+                return Unauthorized(new
+                {
+                    message = "User not authenticated."
+                });
+            }
+            var wallet = await _context.Wallets
+                .FirstOrDefaultAsync(w => w.UserId == currentUser.Id);
 
             if (wallet == null)
             {

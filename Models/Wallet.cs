@@ -8,6 +8,9 @@ namespace EconomyService.Models
         public string PlayerId { get; set; } = Guid.NewGuid().ToString();
 
         public int Balance { get; set; } = 0;
+      // public string UserId { get; set; } = string.Empty;
+        public int UserId { get; set; }
+        public User? User { get; set; }
 
         public List<string> Inventory { get; set; } = new();
 

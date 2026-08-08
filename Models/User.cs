@@ -19,5 +19,6 @@ namespace EconomyService.Models
         public string Role { get; set; } = "User";
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public ICollection<Wallet> Wallets { get; set; } = new List<Wallet>();
     }
 }

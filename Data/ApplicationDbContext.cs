@@ -31,6 +31,12 @@ namespace EconomyService.Data
                 .Property(w => w.ClaimedRewards)
                 .HasConversion(stringListConverter);
 
+            modelBuilder.Entity<Wallet>()
+                .HasOne(w => w.User)
+                .WithMany(u => u.Wallets)
+                .HasForeignKey(w => w.UserId)
+                .HasPrincipalKey(u => u.Id);
+
             base.OnModelCreating(modelBuilder);
         }
     }
